@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>英文拼写和语法检查器</title>
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            background-color: #f9fafb;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+        }
+        .title {
+            font-size: 2.25rem;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        .input-area {
+            margin-bottom: 1.5rem;
+        }
+        .input-label {
+            display: block;
+            font-size: 1rem;
+            font-weight: medium;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+        .input-textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            font-size: 1rem;
+            line-height: 1.5rem;
+            color: #4b5563;
+            background-color: #fff;
+            resize: vertical;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+            transition: border-color 0.15s ease-in-out, shadow-sm 0.15s ease-in-out;
+        }
+        .input-textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+        .reference-select {
+            display: block;
+            font-size: 1rem;
+            font-weight: medium;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+        .select-element {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            font-size: 1rem;
+            color: #4b5563;
+            background-color: #fff;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+            transition: border-color 0.15s ease-in-out, shadow-sm 0.15s ease-in-out;
+            appearance: none; /* 移除默认箭头 */
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E"); /* 自定义箭头 */
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1rem;
+        }
+        .select-element:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+
+        .check-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: medium;
+            color: #fff;
+            background-color: #3b82f6;
+            border: none;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+        }
+        .check-button:hover {
+            background-color: #2563eb;
+        }
+        .check-button:active {
+            background-color: #1e40af;
+            transform: translateY(1px);
+        }
+        .result-area {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            background-color: #f9fafb;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+            transition: opacity 0.3s ease-in-out;
+        }
+        .result-area.show {
+            opacity: .6;
+        }
+        .result-title {
+            font-size: 1.25rem;
+            font-weight:semibold;
+            color: #1f2937;
+            margin-bottom: 1rem;
+        }
+        .result-content {
+            font-size: 1rem;
+            color: #4b5563;
+            line-height: 1.75rem;
+            white-space: pre-wrap;
+        }
+        .error {
+            color: #dc2626;
+            font-weight: bold;
+        }
+        .missing {
+            color: #16a34a;
+            font-weight: bold;
+        }
+        .typo {
+            color: #f59e0b;
+            font-weight: bold;
+        }
+        .correct {
+            color: #16a34a;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container">
+        <div class="input-area">
+            <label for="input-text" class="input-label">输入要检查的英文句子或文章：</label>
+            <textarea id="input-text" class="input-textarea" placeholder="在此输入英文文本..."></textarea>
+        </div>
+        <div class="input-area">
+            <label for="reference-text-select" class="reference-select">选择参考文本：</label>
+            <select id="reference-text-select" class="select-element">
+            </select>
+        </div>
+        <div class="flex justify-end">
+            <button id="check-button" class="check-button">检查文本</button>
+        </div>
+        <div class="result-area" style="display:none">
+            <h2 class="result-title">检查结果：</h2>
+            <div id="result-text" class="result-content"></div>
+        </div>
+    </div>
+
+    <script>
+        // 参考文本对象
+        const referenceTexts = {};
+
+        const inputTextarea = document.getElementById('input-text');
+        const checkButton = document.getElementById('check-button');
+        const resultArea = document.querySelector('.result-area');
+        const resultText = document.getElementById('result-text');
+        const referenceTextSelect = document.getElementById('reference-text-select');
+
+        function checkText() {
+            const inputText = inputTextarea.value.trim();
+            if (!inputText) {
+                alert('请输入要检查的文本！');
+                return;
+            }
+
+            const selectedReferenceKey = referenceTextSelect.value;
+            const selectedReferenceText = referenceTexts[selectedReferenceKey];
+
+            const referenceSentences = selectedReferenceText.split('\n').map(s => s.trim());
+            const inputSentences = inputText.split('\n').map(s => s.trim());
+            let resultHTML = '';
+            let hasErrors = false;
+
+            // 检查输入的句子是否为空
+            if (inputSentences.length === 0 || (inputSentences.length === 1 && inputSentences[0] === "")) {
+                resultText.innerHTML = '<p class="correct">文本检查完成，未发现错误！</p>';
+                resultArea.classList.add('show');
+                setTimeout(() => {
+                    resultArea.classList.remove('show');
+                }, 3000);
+                return;
+            }
+
+            for (let index = 0; index < inputSentences.length; index++) { // 使用标准的for循环
+                const inputSentence = inputSentences[index];
+                const referenceSentence = referenceSentences[index] || ''; // 允许用户输入的句子少于参考文本
+                if (!referenceSentence) {
+                    resultHTML += `<p><strong>检查行 ${index + 1}:</strong> ${inputSentence}  <span class="error"> (此行在参考文本中不存在，可能为多余内容)</span></p>`;
+                    hasErrors = true;
+                    continue; // 使用continue
+                }
+
+                const wordDiff = getWordDiff(referenceSentence, inputSentence);
+                if (wordDiff.length > 0) {
+                    resultHTML += `<p><strong>检查行 ${index + 1}:</strong> `;
+                    wordDiff.forEach(diff => {
+                        if (diff.added) {
+                            resultHTML += `<span class="error">${diff.value}</span>`;
+                            hasErrors = true;
+                        } else if (diff.removed) {
+                            resultHTML += `<span class="missing"> (缺少: ${diff.value}) </span>`;
+                            hasErrors = true;
+                        } else {
+                            resultHTML += diff.value;
+                        }
+                    });
+                    resultHTML += `</p>`;
+                } else {
+                    resultHTML += `<p><strong>检查行 ${index + 1}:</strong> ${inputSentence}  <span> (此行正确)</span></p>`;
+                }
+            }
+
+            // 检查段落结构 (简单的行数比较)
+            if (inputSentences.length !== referenceSentences.length) {
+                resultHTML += `<p><span class="error">段落结构错误：</span> 输入文本和参考文本的段落数量不一致。</p>`;
+                hasErrors = true;
+            }
+
+            const finalResultText = hasErrors ? resultHTML : '<p class="correct">文本检查完成，未发现错误！</p>';
+            resultArea.style.display = 'block';
+            resultText.innerHTML = finalResultText;
+            resultArea.classList.add('show');
+            // 3秒后隐藏结果
+            setTimeout(() => {
+                resultArea.classList.remove('show');
+            }, 800);
+        }
+
+        function getWordDiff(reference, input) {
+            const diff = [];
+            const refWords = reference.split(' ');
+            const inputWords = input.split(' ');
+
+            let i = 0;
+            let j = 0;
+            while (i < refWords.length || j < inputWords.length) {
+                if (i < refWords.length && j < inputWords.length && refWords[i] === inputWords[j]) {
+                    diff.push({ value: refWords[i] + ' ' }); // 添加空格
+                    i++;
+                    j++;
+                } else if (i < refWords.length && j < inputWords.length) {
+                    // Try to find the next matching word
+                    let foundMatch = false;
+                    for (let k = j + 1; k < inputWords.length; k++) {
+                        if (refWords[i] === inputWords[k]) {
+                            // Words in inputWords[j...k-1] are added
+                            for (let l = j; l < k; l++) {
+                                diff.push({ value: inputWords[l] + ' ', added: true }); // 添加空格
+                            }
+                            diff.push({ value: refWords[i] + ' ' }); // push the matching word // 添加空格
+                            i++;
+                            j = k + 1; // update j to after the match
+                            foundMatch = true;
+                            break;
+                        }
+                    }
+                    if (!foundMatch) {
+                         diff.push({ value: refWords[i] + ' ', removed: true }); // 添加空格
+                         i++;
+                    }
+
+                }
+                else if (i < refWords.length) {
+                    diff.push({ value: refWords[i] + ' ', removed: true }); // 添加空格
+                    i++;
+                } else if (j < inputWords.length) {
+                    diff.push({ value: inputWords[j] + ' ', added: true }); // 添加空格
+                    j++;
+                }
+            }
+            return diff;
+        }
+
+        checkButton.addEventListener('click', checkText);
+        inputTextarea.addEventListener('keydown', (event) => {
+            if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+                checkText();
+                event.preventDefault(); // 阻止默认的换行行为
+            }
+        });
+
+        referenceTextSelect.addEventListener('change', () => {
+            inputTextarea.value = '';
+            resultText.innerHTML = '';
+            resultArea.style.display = 'none';
+            inputTextarea.focus();
+        });
+        
+        // GitHub Gist URL
+        const gistId = '68f20f64d189ff4c37b162b02ecdb5a8'; // 替换为你的 Gist ID
+        const apiUrl = `https://api.github.com/gists/${gistId}`;
+        
+        // 初始化参考文本选择器
+        function initializeReferenceSelector() {
+            referenceTextSelect.innerHTML = ''; // 清空下拉框
+            for (const key in referenceTexts) {
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = key === 'default' ? '默认文本' : key;
+                referenceTextSelect.appendChild(option);
+            }
+            // 添加一个选项来选择 Gist
+            <!-- const gistOption = document.createElement('option'); -->
+            <!-- gistOption.value = 'myGist'; // 使用一个唯一的 key -->
+            <!-- gistOption.textContent = '我的 Gist'; -->
+            <!-- referenceTextSelect.appendChild(gistOption); -->
+        }
+        
+        // 在页面加载时获取 Gist 内容并初始化下拉框
+        window.onload = function() {
+            fetch(apiUrl) // 使用你在上面定义的 apiUrl
+                .then(response => response.json())
+                .then(data => {
+                    // 找到包含你的参考文本的文件
+                    const filename = Object.keys(data.files)[0];
+                    const rawUrl = data.files[filename].raw_url;
+                    return fetch(rawUrl);
+                })
+                .then(response => response.text())
+                .then(textData => {
+                    // 这里使用 try-catch 来处理 JSON 解析错误
+                    try {
+                    const gistContent = JSON.parse(textData);
+                        // 确保 gistContent 是一个对象
+                        if (typeof gistContent === 'object' && gistContent !== null) {
+                            // 清空现有的 referenceTexts
+                            for (const key in referenceTexts) {
+                                if (key !== 'default') { // 保留 'default'
+                                    delete referenceTexts[key];
+                                }
+                            }
+                            // 将 Gist 的内容合并到 referenceTexts 中
+                            Object.assign(referenceTexts, gistContent);
+                        } else {
+                            console.error('Gist 内容不是有效的 文本');
+                            alert('Gist 内容无效，请确保上传的是有效的 文本！');
+                        }
+                    } catch (error) {
+                        console.error('Error parsing Gist 文本:', error);
+                        alert('解析 Gist 内容时发生错误，请检查 Gist 的内容是否为有效的 文本！');
+                    }
+                    initializeReferenceSelector(); // 初始化下拉框
+                })
+                .catch(error => {
+                    console.error('Error fetching Gist:', error);
+                    // 如果获取 Gist 失败，仍然初始化下拉框，但不要包含 Gist 选项
+                    initializeReferenceSelector();
+                });
+        };
+    </script>
+</body>
+</html>
