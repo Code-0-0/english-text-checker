@@ -389,35 +389,23 @@
             for (const key in referenceTexts) {
                 const option = document.createElement('option');
                 option.value = key;
-                option.textContent = key === 'default' ? '默认文本' : key;
+                option.textContent = key;
                 referenceTextSelect.appendChild(option);
             }
         }
         
+        
+        const jsonUrl = 'https://code-0-0.github.io/english-text-checker/sentences.json';
         window.onload = function() {
-            
-            fetch(apiUrl)
-                .then(response => response.json())
-                .then(data => {
-                    const filename = Object.keys(data.files)[0];
-                    const rawUrl = data.files[filename].raw_url;
-                    return fetch(rawUrl);
-                })
+            fetch(jsonUrl)
                 .then(response => response.text())
-                .then(textData => {
+                .then(data => {
                     // 这里使用 try-catch 来处理 JSON 解析错误
                     try {
-                    const gistContent = JSON.parse(textData);
-                        // 确保 gistContent 是一个对象
-                        if (typeof gistContent === 'object' && gistContent !== null) {
-                            // 清空现有的 referenceTexts
-                            for (const key in referenceTexts) {
-                                if (key !== 'default') { // 保留 'default'
-                                    delete referenceTexts[key];
-                                }
-                            }
-                            // 将 Gist 的内容合并到 referenceTexts 中
-                            Object.assign(referenceTexts, gistContent);
+                        const jsonContent = JSON.parse(data);
+                        // 确保 jsonContent 是一个对象
+                        if (typeof jsonContent === 'object' && jsonContent !== null) {
+                            Object.assign(referenceTexts, jsonContent);
                         } else {
                             console.error('Gist 内容不是有效的 文本');
                             alert('Gist 内容无效，请确保上传的是有效的 文本！');
