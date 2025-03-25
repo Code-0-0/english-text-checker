@@ -402,6 +402,8 @@
                 .then(data => {
                     // 这里使用 try-catch 来处理 JSON 解析错误
                     try {
+                        data = data.replace(/[\u2018\u2019]/g, "'");
+                        
                         const jsonContent = JSON.parse(data);
                         // 确保 jsonContent 是一个对象
                         if (typeof jsonContent === 'object' && jsonContent !== null) {
