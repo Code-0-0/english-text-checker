@@ -285,80 +285,80 @@
             }, 800);
         }
 
-    // 新增函数：将文本分割为单词和空格交替的数组
-    function splitIntoWordsAndSpaces(str) {
-        const tokens = [];
-        const regex = /(\s+)|(\S+)/g; // 匹配连续空格或非空格内容
-        let match;
-        while ((match = regex.exec(str)) !== null) {
-            if (match[1]) {
-                tokens.push(match[1]); // 空格部分
-            } else if (match[2]) {
-                tokens.push(match[2]); // 单词部分
+        // 新增函数：将文本分割为单词和空格交替的数组
+        function splitIntoWordsAndSpaces(str) {
+            const tokens = [];
+            const regex = /(\s+)|(\S+)/g; // 匹配连续空格或非空格内容
+            let match;
+            while ((match = regex.exec(str)) !== null) {
+                if (match[1]) {
+                    tokens.push(match[1]); // 空格部分
+                } else if (match[2]) {
+                    tokens.push(match[2]); // 单词部分
+                }
             }
+            return tokens;
         }
-        return tokens;
-    }
 
-    function getWordDiff(reference, input) {
-        const refWords = splitIntoWordsAndSpaces(reference);
-        const inputWords = splitIntoWordsAndSpaces(input);
-        
-        const diff = [];
-        let i = 0;
-        let j = 0;
-        
-        while (i < refWords.length || j < inputWords.length) {
-            if (i < refWords.length && j < inputWords.length && refWords[i] === inputWords[j]) {
-                diff.push({ value: refWords[i] });
-                i++;
-                j++;
-            } else {
-                // 处理空格差异的特殊逻辑
-                const isRefSpace = i < refWords.length && /^\s+$/.test(refWords[i]);
-                const isInputSpace = j < inputWords.length && /^\s+$/.test(inputWords[j]);
-                
-                if (isRefSpace || isInputSpace) {
-                    // 空格类型差异直接标记
-                    if (j < inputWords.length) {
-                        diff.push({ value: inputWords[j], added: true });
-                        j++;
-                    }
-                    if (i < refWords.length) {
-                        diff.push({ value: refWords[i], removed: true });
-                        i++;
-                    }
+        function getWordDiff(reference, input) {
+            const refWords = splitIntoWordsAndSpaces(reference);
+            const inputWords = splitIntoWordsAndSpaces(input);
+            
+            const diff = [];
+            let i = 0;
+            let j = 0;
+            
+            while (i < refWords.length || j < inputWords.length) {
+                if (i < refWords.length && j < inputWords.length && refWords[i] === inputWords[j]) {
+                    diff.push({ value: refWords[i] });
+                    i++;
+                    j++;
                 } else {
-                    // 增加邻近单词匹配逻辑
-                    const lookAhead = 3; // 最大向前查看3个单词
-                    let matchFound = false;
+                    // 处理空格差异的特殊逻辑
+                    const isRefSpace = i < refWords.length && /^\s+$/.test(refWords[i]);
+                    const isInputSpace = j < inputWords.length && /^\s+$/.test(inputWords[j]);
                     
-                    // 尝试在后续单词中寻找匹配
-                    for (let k = 1; k <= lookAhead; k++) {
-                        if (i+k < refWords.length && j+k < inputWords.length 
-                            && refWords[i+k] === inputWords[j+k]) {
-                            // 记录当前差异
-                            diff.push(
-                                { value: inputWords[j], added: true },
-                                { value: refWords[i], removed: true }
-                            );
+                    if (isRefSpace || isInputSpace) {
+                        // 空格类型差异直接标记
+                        if (j < inputWords.length) {
+                            diff.push({ value: inputWords[j], added: true });
+                            j++;
+                        }
+                        if (i < refWords.length) {
+                            diff.push({ value: refWords[i], removed: true });
+                            i++;
+                        }
+                    } else {
+                        // 增加邻近单词匹配逻辑
+                        const lookAhead = 3; // 最大向前查看3个单词
+                        let matchFound = false;
+                        
+                        // 尝试在后续单词中寻找匹配
+                        for (let k = 1; k <= lookAhead; k++) {
+                            if (i+k < refWords.length && j+k < inputWords.length 
+                                && refWords[i+k] === inputWords[j+k]) {
+                                // 记录当前差异
+                                diff.push(
+                                    { value: inputWords[j], added: true },
+                                    { value: refWords[i], removed: true }
+                                );
+                                i++;
+                                j++;
+                                matchFound = true;
+                                break;
+                            }
+                        }
+                        if (!matchFound) {
+                            if (j < inputWords.length) diff.push({ value: inputWords[j], added: true });
+                            if (i < refWords.length) diff.push({ value: refWords[i], removed: true });
                             i++;
                             j++;
-                            matchFound = true;
-                            break;
                         }
-                    }
-                    if (!matchFound) {
-                        if (j < inputWords.length) diff.push({ value: inputWords[j], added: true });
-                        if (i < refWords.length) diff.push({ value: refWords[i], removed: true });
-                        i++;
-                        j++;
                     }
                 }
             }
+            return diff;
         }
-        return diff;
-    }
 
         checkButton.addEventListener('click', checkText);
         
@@ -366,6 +366,27 @@
             if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
                 checkText();
                 event.preventDefault();
+            }
+
+            if (event.ctrlKey && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) {
+                event.preventDefault();
+
+                const options = referenceTextSelect.options;
+                const currentIndex = referenceTextSelect.selectedIndex;
+                let newIndex;
+
+                if (event.key === 'ArrowUp') {
+                    newIndex = currentIndex - 1;
+                    if (newIndex < 0)
+                        newIndex = options.length - 1;
+                } else {
+                    newIndex = currentIndex + 1;
+                    if (newIndex >= options.length)
+                        newIndex = 0;
+                }
+
+                referenceTextSelect.selectedIndex = newIndex;
+                referenceTextSelect.dispatchEvent(new Event('change'));
             }
         });
 
@@ -377,7 +398,7 @@
             inputTextarea.focus();
             referenceText.innerText = '';
         });
-        
+
         inputTextarea.addEventListener('input', function () {
             const minHeight = parseInt(getComputedStyle(this).minHeight) || 0;
             this.style.height = 'auto';
@@ -400,40 +421,40 @@
             }
         }
         
-        
         const jsonUrl = 'https://code-0-0.github.io/english-text-checker/sentences.json';
-        window.onload = function() {
+        window.onload = function () {
             fetch(jsonUrl)
-                .then(response => response.text())
-                .then(data => {
-                    // 这里使用 try-catch 来处理 JSON 解析错误
-                    try {
-                        data = data.replace(/[\u2018\u2019]/g, "'");
-                        
-                        const jsonContent = JSON.parse(data);
-                        // 确保 jsonContent 是一个对象
-                        if (typeof jsonContent === 'object' && jsonContent !== null) {
-                            Object.assign(referenceTexts, jsonContent);
-                        } else {
-                            console.error('Gist 内容不是有效的 文本');
-                            alert('Gist 内容无效，请确保上传的是有效的 文本！');
-                        }
-                    } catch (error) {
-                        console.error('Error parsing Gist 文本:', error);
-                        alert('解析 Gist 内容时发生错误，请检查 Gist 的内容是否为有效的 文本！');
+            .then(response => response.text())
+            .then(data => {
+                // 这里使用 try-catch 来处理 JSON 解析错误
+                try {
+                    data = data.replace(/[\u2018\u2019]/g, "'");
+
+                    const jsonContent = JSON.parse(data);
+                    // 确保 jsonContent 是一个对象
+                    if (typeof jsonContent === 'object' && jsonContent !== null) {
+                        Object.assign(referenceTexts, jsonContent);
+                    } else {
+                        console.error('Gist 内容不是有效的 文本');
+                        alert('Gist 内容无效，请确保上传的是有效的 文本！');
                     }
-                    initializeReferenceSelector(); // 初始化下拉框
-                })
-                .catch(error => {
-                    console.error('Error fetching Gist:', error);
-                    // 如果获取 Gist 失败，仍然初始化下拉框，但不要包含 Gist 选项
-                    initializeReferenceSelector();
-                });
+                } catch (error) {
+                    console.error('Error parsing Gist 文本:', error);
+                    alert('解析 Gist 内容时发生错误，请检查 Gist 的内容是否为有效的 文本！');
+                }
+                initializeReferenceSelector(); // 初始化下拉框
+            })
+            .catch(error => {
+                console.error('Error fetching Gist:', error);
+                // 如果获取 Gist 失败，仍然初始化下拉框，但不要包含 Gist 选项
+                initializeReferenceSelector();
+            });
         };
     </script>
 <style>
 .speaker{display:none;width:48px;height:16px;cursor:pointer;position:fixed;top:270px;right:1px}
-.showref{width:48px;height:48px;cursor:pointer;position:fixed;bottom:85px;right:6px}
+.github{width:45px;height:45px;cursor:pointer;position:fixed;bottom:155px;right:6px}
+.showref{width:47px;height:47px;cursor:pointer;position:fixed;bottom:85px;right:6px}
 .setting{width:48px;height:48px;cursor:pointer;position:fixed;bottom:15px;right:6px}
 #dialogOverlay{position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(0,0,0,.5);display:none;justify-content:center;align-items:center}
 #dialogBox{background-color:#fff;padding:20px;border-radius:5px;box-shadow:0 0 10px rgba(0,0,0,.3)}
@@ -446,6 +467,7 @@
 <div class='speaker'>
 <svg viewBox="0 0 50 50"><g><path fill="#e5e5e5" d="M42.756,7.501l-1.412,1.414c4.296,4.3,6.661,10.018,6.661,16.102c0,6.081-2.365,11.799-6.659,16.099l1.412,1.414c4.672-4.678,7.244-10.897,7.244-17.513C50.003,18.4,47.429,12.179,42.756,7.501z M0,16.003v18.004l11.004-0.005l19,13v-44l-19,13L0,16.003z M28.004,7.001v36l-16-11L1.997,32.006V18.003l10.006-0.001L28.004,7.001z M34.05,14.226c2.879,2.883,4.954,6.699,4.954,10.776c0,4.076-2.075,7.925-4.954,10.807l1.412,1.414c3.256-3.26,5.542-7.611,5.542-12.222c0-4.611-2.286-8.93-5.542-12.19L34.05,14.226z"/></g></svg>
 </div>
+<div class='github'><a href="https://github.com/Code-0-0/english-text-checker" target="_blank"><svg viewBox="0 0 1049 1024"><path fill="#e5e5e5" d="M524.979332 0C234.676191 0 0 234.676191 0 524.979332c0 232.068678 150.366597 428.501342 358.967656 498.035028 26.075132 5.215026 35.636014-11.299224 35.636014-25.205961 0-12.168395-0.869171-53.888607-0.869171-97.347161-146.020741 31.290159-176.441729-62.580318-176.441729-62.580318-23.467619-60.841976-58.234462-76.487055-58.234463-76.487055-47.804409-32.15933 3.476684-32.15933 3.476685-32.15933 53.019436 3.476684 80.83291 53.888607 80.83291 53.888607 46.935238 79.963739 122.553122 57.365291 152.97411 43.458554 4.345855-33.897672 18.252593-57.365291 33.028501-70.402857-116.468925-12.168395-239.022047-57.365291-239.022047-259.012982 0-57.365291 20.860106-104.300529 53.888607-140.805715-5.215026-13.037566-23.467619-66.926173 5.215027-139.067372 0 0 44.327725-13.906737 144.282399 53.888607 41.720212-11.299224 86.917108-17.383422 131.244833-17.383422s89.524621 6.084198 131.244833 17.383422C756.178839 203.386032 800.506564 217.29277 800.506564 217.29277c28.682646 72.1412 10.430053 126.029806 5.215026 139.067372 33.897672 36.505185 53.888607 83.440424 53.888607 140.805715 0 201.64769-122.553122 245.975415-239.891218 259.012982 19.121764 16.514251 35.636014 47.804409 35.636015 97.347161 0 70.402857-0.869171 126.898978-0.869172 144.282399 0 13.906737 9.560882 30.420988 35.636015 25.205961 208.601059-69.533686 358.967656-265.96635 358.967655-498.035028C1049.958663 234.676191 814.413301 0 524.979332 0z"></path><path fill="#e5e5e5" d="M199.040177 753.571326c-0.869171 2.607513-5.215026 3.476684-8.691711 1.738342s-6.084198-5.215026-4.345855-7.82254c0.869171-2.607513 5.215026-3.476684 8.691711-1.738342s5.215026 5.215026 4.345855 7.82254z m-6.953369-4.345856M219.900283 777.038945c-2.607513 2.607513-7.82254 0.869171-10.430053-2.607514-3.476684-3.476684-4.345855-8.691711-1.738342-11.299224 2.607513-2.607513 6.953369-0.869171 10.430053 2.607514 3.476684 4.345855 4.345855 9.560882 1.738342 11.299224z m-5.215026-5.215027M240.760389 807.459932c-3.476684 2.607513-8.691711 0-11.299224-4.345855-3.476684-4.345855-3.476684-10.430053 0-12.168395 3.476684-2.607513 8.691711 0 11.299224 4.345855 3.476684 4.345855 3.476684 9.560882 0 12.168395z m0 0M269.443034 837.011749c-2.607513 3.476684-8.691711 2.607513-13.906737-1.738342-4.345855-4.345855-6.084198-10.430053-2.607513-13.037566 2.607513-3.476684 8.691711-2.607513 13.906737 1.738342 4.345855 3.476684 5.215026 9.560882 2.607513 13.037566z m0 0M308.555733 853.526c-0.869171 4.345855-6.953369 6.084198-13.037566 4.345855-6.084198-1.738342-9.560882-6.953369-8.691711-10.430053 0.869171-4.345855 6.953369-6.084198 13.037566-4.345855 6.084198 1.738342 9.560882 6.084198 8.691711 10.430053z m0 0M351.145116 857.002684c0 4.345855-5.215026 7.82254-11.299224 7.82254-6.084198 0-11.299224-3.476684-11.299224-7.82254s5.215026-7.82254 11.299224-7.82254c6.084198 0 11.299224 3.476684 11.299224 7.82254z m0 0M391.126986 850.049315c0.869171 4.345855-3.476684 8.691711-9.560882 9.560882-6.084198 0.869171-11.299224-1.738342-12.168395-6.084197-0.869171-4.345855 3.476684-8.691711 9.560881-9.560882 6.084198-0.869171 11.299224 1.738342 12.168396 6.084197z m0 0"></path></svg></a></div>
 <div class='showref' onclick="showReferenceText()"><svg viewBox="0 0 1024 1024"><path fill="#e5e5e5" d="M153.6 153.6v243.626667l31.701333-0.981334c10.922667-88.917333 82.346667-149.589333 122.88-159.701333 40.704-10.112 119.04 0.896 119.04 0.896s-1.066667 501.632-1.066666 536.917333c0 35.413333-47.573333 50.56-47.573334 50.56l-63.402666 1.024-0.938667 44.458667h395.605333v-43.392h-72.362666c-32.725333-3.072-52.48-45.525333-52.48-45.525333l0.853333-549.162667s49.621333-9.088 121.045333 4.096c71.381333 13.141333 131.84 163.754667 131.84 163.754667h31.658667V153.6H153.6z"/></svg></div>
 <div class='setting' onclick="showSettingsDialog()"><svg viewBox="0 0 512 512"><g><path fill="#e5e5e5" d="M293.9,450H233.53a15,15,0,0,1-14.92-13.42l-4.47-42.09a152.77,152.77,0,0,1-18.25-7.56L163,413.53a15,15,0,0,1-20-1.06l-42.69-42.69a15,15,0,0,1-1.06-20l26.61-32.93a152.15,152.15,0,0,1-7.57-18.25L76.13,294.1a15,15,0,0,1-13.42-14.91V218.81A15,15,0,0,1,76.13,203.9l42.09-4.47a152.15,152.15,0,0,1,7.57-18.25L99.18,148.25a15,15,0,0,1,1.06-20l42.69-42.69a15,15,0,0,1,20-1.06l32.93,26.6a152.77,152.77,0,0,1,18.25-7.56l4.47-42.09A15,15,0,0,1,233.53,48H293.9a15,15,0,0,1,14.92,13.42l4.46,42.09a152.91,152.91,0,0,1,18.26,7.56l32.92-26.6a15,15,0,0,1,20,1.06l42.69,42.69a15,15,0,0,1,1.06,20l-26.61,32.93a153.8,153.8,0,0,1,7.57,18.25l42.09,4.47a15,15,0,0,1,13.41,14.91v60.38A15,15,0,0,1,451.3,294.1l-42.09,4.47a153.8,153.8,0,0,1-7.57,18.25l26.61,32.93a15,15,0,0,1-1.06,20L384.5,412.47a15,15,0,0,1-20,1.06l-32.92-26.6a152.91,152.91,0,0,1-18.26,7.56l-4.46,42.09A15,15,0,0,1,293.9,450ZM247,420h33.39l4.09-38.56a15,15,0,0,1,11.06-12.91A123,123,0,0,0,325.7,356a15,15,0,0,1,17,1.31l30.16,24.37,23.61-23.61L372.06,328a15,15,0,0,1-1.31-17,122.63,122.63,0,0,0,12.49-30.14,15,15,0,0,1,12.92-11.06l38.55-4.1V232.31l-38.55-4.1a15,15,0,0,1-12.92-11.06A122.63,122.63,0,0,0,370.75,187a15,15,0,0,1,1.31-17l24.37-30.16-23.61-23.61-30.16,24.37a15,15,0,0,1-17,1.31,123,123,0,0,0-30.14-12.49,15,15,0,0,1-11.06-12.91L280.41,78H247l-4.09,38.56a15,15,0,0,1-11.07,12.91A122.79,122.79,0,0,0,201.73,142a15,15,0,0,1-17-1.31L154.6,116.28,131,139.89l24.38,30.16a15,15,0,0,1,1.3,17,123.41,123.41,0,0,0-12.49,30.14,15,15,0,0,1-12.91,11.06l-38.56,4.1v33.38l38.56,4.1a15,15,0,0,1,12.91,11.06A123.41,123.41,0,0,0,156.67,311a15,15,0,0,1-1.3,17L131,358.11l23.61,23.61,30.17-24.37a15,15,0,0,1,17-1.31,122.79,122.79,0,0,0,30.13,12.49,15,15,0,0,1,11.07,12.91ZM449.71,279.19h0Z"/><path fill="#e5e5e5"  d="M263.71,340.36A91.36,91.36,0,1,1,355.08,249,91.46,91.46,0,0,1,263.71,340.36Zm0-152.72A61.36,61.36,0,1,0,325.08,249,61.43,61.43,0,0,0,263.71,187.64Z"/></g></svg></div>
 <div id="dialogOverlay">
