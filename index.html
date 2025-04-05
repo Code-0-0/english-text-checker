@@ -406,10 +406,6 @@
             this.style.height = newHeight + 'px';
         });
         
-        // GitHub Gist URL
-        const gistId = '68f20f64d189ff4c37b162b02ecdb5a8'; // 替换为你的 Gist ID
-        const apiUrl = `https://api.github.com/gists/${gistId}`;
-        
         // 初始化参考文本选择器
         function initializeReferenceSelector() {
             referenceTextSelect.innerHTML = ''; // 清空下拉框
@@ -423,7 +419,11 @@
         
         const jsonUrl = 'https://code-0-0.github.io/english-text-checker/sentences.json';
         window.onload = function () {
-            fetch(jsonUrl)
+            fetch(jsonUrl, {
+                headers: {
+                    'Cache-Control': 'no-cache',
+                }
+            })
             .then(response => response.text())
             .then(data => {
                 // 这里使用 try-catch 来处理 JSON 解析错误
