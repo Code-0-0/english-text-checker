@@ -428,7 +428,7 @@
             .then(data => {
                 // 这里使用 try-catch 来处理 JSON 解析错误
                 try {
-		    data = data.replace(/[\u2018\u2019]/g, "'").replace(/[\u201c\u201d]/g, '"');
+		    data = data.replace(/[\u2018\u2019]/g, "'").replace(/[\u201c\u201d]/g, '\"');
 
                     const jsonContent = JSON.parse(data);
                     // 确保 jsonContent 是一个对象
