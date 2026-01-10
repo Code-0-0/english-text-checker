@@ -534,7 +534,8 @@ utter.onerror = (event) => {
 };
 
 function readaloud(text) {
-    if (!text || synth.speaking) return;
+    if (!text) return;
+	if (synth.speaking) synth.cancel();
     utter.text = text;
     synth.speak(utter)
 }
@@ -608,4 +609,5 @@ document.querySelector('.cb').addEventListener('click', closeDisplay);
 </script>
 </body>
 </html>
+
 
