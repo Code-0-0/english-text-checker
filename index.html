@@ -399,12 +399,17 @@
             referenceText.innerText = '';
         });
 
-        inputTextarea.addEventListener('input', function () {
-            const minHeight = parseInt(getComputedStyle(this).minHeight) || 0;
-            this.style.height = 'auto';
-            const newHeight = Math.max(this.scrollHeight, minHeight);
-            this.style.height = newHeight + 'px';
-        });
+		inputTextarea.addEventListener('input', function () {
+		    const rect = this.getBoundingClientRect();
+		    const oldTop = rect.top;
+		
+		    const minHeight = parseInt(getComputedStyle(this).minHeight) || 0;
+		    this.style.height = 'auto';
+		    this.style.height = Math.max(this.scrollHeight, minHeight) + 'px';
+		
+		    const newTop = this.getBoundingClientRect().top;
+		    window.scrollBy(0, newTop - oldTop);
+		});
         
         // 初始化参考文本选择器
         function initializeReferenceSelector() {
